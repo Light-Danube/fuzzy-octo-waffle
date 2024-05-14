@@ -1,5 +1,6 @@
 @echo off
-
+:: Запуск блока "предсказание"
+echo Launching emotion analysis system UI, please wait...
 :: Активация виртуального окружения
 call venv\Scripts\activate
 

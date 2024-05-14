@@ -1,88 +1,140 @@
-"""import gradio as gr
-
-def analyze_data(file):
-    # Здесь происходит анализ загруженного файла
-    return "Analysis results for " + file.name
-
-def calculate(x, y):
-    result = x + y
-    return f"The sum of {x} and {y} is {result}"
-
-with gr.Blocks() as demo:
-    gr.Markdown("Choose an option below:")
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown("Upload a file:")
-            file_inp = gr.File(label="Upload File")
-            file_out = gr.Textbox()
-        with gr.Column():
-            gr.Markdown("Calculator:")
-            num1 = gr.Number(label="Number 1")
-            num2 = gr.Number(label="Number 2")
-            calc_out = gr.Textbox()
-
-    btn_analyze = gr.Button("Analyze File")
-    btn_analyze.click(fn=analyze_data, inputs=file_inp, outputs=file_out)
-    
-    btn_calculate = gr.Button("Calculate")
-    btn_calculate.click(fn=calculate, inputs=[num1, num2], outputs=calc_out)
-
-demo.launch()"""
-
-
 import gradio as gr
 import os
-from tensorflow.keras.models import load_model
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
+import tensorflow as tf
+import matplotlib.pyplot as plt
+import keras
+import numpy as np
 import pickle
 
-def load_model_and_tokenizer(model_file, tokenizer_file):
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+        
+def load_model_and_tokenizer(model_name, tokenizer_name):
     """
-    Loads the model and tokenizer from the uploaded files.
+    Loads the model and tokenizer using the provided names.
     """
+    model_path = os.path.join("models", f"{model_name}.h5")
+    tokenizer_path = os.path.join("tokenizers", f"{tokenizer_name}.pickle")
+
     try:
         # Load model
-        model = load_model(model_file)
+        model = tf.keras.models.load_model(model_path)
         # Load tokenizer
-        with open(tokenizer_file, 'rb') as f:
+        with open(tokenizer_path, 'rb') as f:
             tokenizer = pickle.load(f)
-        return model, tokenizer
+        return model, tokenizer, None
     except Exception as e:
         return None, None, f"Ошибка при загрузке модели и токенайзера: {e}"
 
-def predict_emotion(text, model, tokenizer):
+def predict_text(text, model_file, tokenizer_file, mode, language, model=None, tokenizer=None):
     """
-    Predicts emotion for the given text using the loaded model and tokenizer.
+    Makes predictions on the given text using the provided model, mode, and language.
     """
-    # Perform prediction
-    # Example code: 
-    # prediction = model.predict(...)
-    # return prediction
-    return "Placeholder: Emotion prediction for " + text
+    # Load model and tokenizer if not already loaded
+    if not model or not tokenizer:
+        model, tokenizer = model_file, tokenizer_file
+        if model is None:
+            return "Ошибка при загрузке модели."
+        if tokenizer is None:
+            return "Ошибка при загрузке токенайзера."
 
-def upload_files(model_upload, tokenizer_upload):
-    """
-    Displays file upload option and saves the uploaded files.
-    """
-    model_path = "models/" + model_upload.name
-    tokenizer_path = "tokenizers/" + tokenizer_upload.name
-    model_upload.save(model_path)
-    tokenizer_upload.save(tokenizer_path)
-    return model_path, tokenizer_path
+    if mode == "emotion_analysis":
+        # Tokenize text using the loaded tokenizer
+        if isinstance(tokenizer, keras.preprocessing.text.Tokenizer):
+            # Keras Tokenizer
+            text_sequences = tokenizer.texts_to_sequences([text])  # Convert text to a list for tokenization
+            inputs = pad_sequences(text_sequences, maxlen=80, padding='post')  # Pad sequences
+        else:
+            # Assuming Transformer tokenizer
+            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
 
-# Create Gradio interface
+        # Make predictions
+        outputs = model.predict(inputs)
+
+        # Get predicted emotions
+        emotions = {0: 'joy', 1: 'anger', 2: 'love', 3: 'sadness', 4: 'fear', 5: 'surprise'}
+        predicted_emotions = [emotions[i] for i in range(len(emotions))]
+        predicted_probabilities = outputs.tolist()[0]
+
+        # Find the most probable emotion
+        most_probable_idx = np.argmax(predicted_probabilities)
+        most_probable_emotion = predicted_emotions[most_probable_idx]
+        most_probable_probability = predicted_probabilities[most_probable_idx]
+
+        # Plot the result
+        plt.figure(figsize=(8, 6))
+        plt.barh(predicted_emotions, predicted_probabilities)
+        plt.xlabel('Шанс', fontsize=15)
+        plt.ylabel('Емоція', fontsize=15)
+        plt.title('Аналіз Емоції Настрою', fontsize=18)
+        plt.axhline(y=most_probable_idx, color='red', linestyle='--', label=f'Most Probable: {most_probable_emotion} ({most_probable_probability:.2f})')
+        plt.legend()
+        plt.show()
+
+        # Highlight the predicted emotion
+        result = f"**Передбачена емоція:** {most_probable_emotion} ({most_probable_probability:.2f})\n"
+        result += "Список емоцій: " + str(predicted_emotions) + "\n"
+        result += "Шанс кожної емоції: " + str(predicted_probabilities)
+        return result
+
+    elif mode == "sentiment_analysis":
+        if isinstance(tokenizer, keras.preprocessing.text.Tokenizer):
+            # Keras Tokenizer
+            sequence = tokenizer.texts_to_sequences([text])  # Convert text to a sequence
+            padded = pad_sequences(sequence, maxlen=4, padding='post')  # Pad the sequence
+            inputs = tf.convert_to_tensor(padded, dtype=tf.int32)  # Convert to tensor
+        else:
+            # Assuming Transformer tokenizer
+            inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+
+        # Make predictions
+        outputs = model.predict(inputs)
+
+        # Get sentiment prediction
+        sentiment = outputs.item()
+
+        # Plot the result
+        plt.figure(figsize=(6, 4))
+        plt.barh(['Негативний', 'Позитивний'], [1-sentiment, sentiment])
+        plt.xlabel('Шанс', fontsize=15)
+        plt.ylabel('Настрій', fontsize=15)
+        plt.title('Аналіз Настрою', fontsize=18)
+        plt.show()
+
+        # Highlight the predicted sentiment
+        sentiment_label = "Позитивний" if sentiment > 0.5 else "Негативний"
+        result = f"**Передбачений настрій:** {sentiment_label} ({sentiment:.2f})"
+        return result
+
+    elif mode == "none":
+        return text
+
+    else:
+        return "Режим не підтримується."
+
+# Interface with mode selection
 iface = gr.Interface(
-    predict_emotion,
-    ["textbox", gr.inputs.File(type="file", label="Upload Model (.h5)"), gr.inputs.File(type="file", label="Upload Tokenizer (.pickle)")],
-    "text",
+    fn=predict_text,
+    inputs=[
+     gr.Textbox(label="Текстове повідомлення", lines=5),
+     #gr.Textbox(label="Введіть назву моделі"),
+     #gr.Textbox(label="Введіть назву токенайзера"),
+     gr.File(type="file", label="Upload Model (.h5)"),
+     gr.File(type="file", label="Upload Tokenizer (.pickle)"),
+     gr.Dropdown(["emotion_analysis", "sentiment_analysis", "none"], label="Режим"),
+     gr.Dropdown(["ukrainian", "english"], label="Мова")
+    ],
+    outputs="text",
     title="Emotion Analyzer",
     description="Upload a text and model/tokenizer files (.h5 and .pickle) to predict the emotion.",
-    allow_flagging="never",
-    allow_screenshot=False
+    allow_flagging="never"
 )
 
 # Run the interface
 iface.launch()
-
 
 
 
