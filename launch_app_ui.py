@@ -7,18 +7,20 @@ import matplotlib.pyplot as plt
 import keras
 import numpy as np
 import pickle
+import tempfile
 
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# Intialize files globaly.
+model = None
+tokenizer = None
         
-def load_model_and_tokenizer(model_name, tokenizer_name):
+def load_model_and_tokenizer(model_path, tokenizer_path):
     """
     Loads the model and tokenizer using the provided names.
     """
-    model_path = os.path.join("models", f"{model_name}.h5")
-    tokenizer_path = os.path.join("tokenizers", f"{tokenizer_name}.pickle")
-
     try:
         # Load model
         model = tf.keras.models.load_model(model_path)
@@ -27,19 +29,21 @@ def load_model_and_tokenizer(model_name, tokenizer_name):
             tokenizer = pickle.load(f)
         return model, tokenizer, None
     except Exception as e:
-        return None, None, f"Ошибка при загрузке модели и токенайзера: {e}"
+        return None, None, f"Помилка при завантаженні моделі та токенайзера: {e}"
 
 def predict_text(text, model_file, tokenizer_file, mode, language, model=None, tokenizer=None):
     """
     Makes predictions on the given text using the provided model, mode, and language.
     """
-    # Load model and tokenizer if not already loaded
-    if not model or not tokenizer:
-        model, tokenizer = model_file, tokenizer_file
-        if model is None:
-            return "Ошибка при загрузке модели."
-        if tokenizer is None:
-            return "Ошибка при загрузке токенайзера."
+    # Load model and tokenizer from the uploaded files
+    #model, tokenizer, error = load_model_and_tokenizer(model_file.name, tokenizer_file.name)
+    #if error:
+        #return error
+    # Завантаж модель і токенайзер лише один раз
+    if model is None or tokenizer is None:
+        model, tokenizer, error = load_model_and_tokenizer(model_file.name, tokenizer_file.name)
+        if error:
+            return error, None
 
     if mode == "emotion_analysis":
         # Tokenize text using the loaded tokenizer
@@ -73,18 +77,23 @@ def predict_text(text, model_file, tokenizer_file, mode, language, model=None, t
         plt.axhline(y=most_probable_idx, color='red', linestyle='--', label=f'Most Probable: {most_probable_emotion} ({most_probable_probability:.2f})')
         plt.legend()
         plt.show()
+        
+        # Save the plot to a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        plt.savefig(temp_file.name)
+        plt.close()
 
         # Highlight the predicted emotion
         result = f"**Передбачена емоція:** {most_probable_emotion} ({most_probable_probability:.2f})\n"
         result += "Список емоцій: " + str(predicted_emotions) + "\n"
         result += "Шанс кожної емоції: " + str(predicted_probabilities)
-        return result
+        return result, temp_file.name
 
     elif mode == "sentiment_analysis":
         if isinstance(tokenizer, keras.preprocessing.text.Tokenizer):
             # Keras Tokenizer
             sequence = tokenizer.texts_to_sequences([text])  # Convert text to a sequence
-            padded = pad_sequences(sequence, maxlen=4, padding='post')  # Pad the sequence
+            padded = pad_sequences(sequence, maxlen=80, padding='post')  # Pad the sequence
             inputs = tf.convert_to_tensor(padded, dtype=tf.int32)  # Convert to tensor
         else:
             # Assuming Transformer tokenizer
@@ -103,11 +112,16 @@ def predict_text(text, model_file, tokenizer_file, mode, language, model=None, t
         plt.ylabel('Настрій', fontsize=15)
         plt.title('Аналіз Настрою', fontsize=18)
         plt.show()
+        
+        # Save the plot to a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+        plt.savefig(temp_file.name)
+        plt.close()
 
         # Highlight the predicted sentiment
         sentiment_label = "Позитивний" if sentiment > 0.5 else "Негативний"
         result = f"**Передбачений настрій:** {sentiment_label} ({sentiment:.2f})"
-        return result
+        return result, temp_file.name
 
     elif mode == "none":
         return text
@@ -120,14 +134,12 @@ iface = gr.Interface(
     fn=predict_text,
     inputs=[
      gr.Textbox(label="Текстове повідомлення", lines=5),
-     #gr.Textbox(label="Введіть назву моделі"),
-     #gr.Textbox(label="Введіть назву токенайзера"),
      gr.File(type="file", label="Upload Model (.h5)"),
      gr.File(type="file", label="Upload Tokenizer (.pickle)"),
      gr.Dropdown(["emotion_analysis", "sentiment_analysis", "none"], label="Режим"),
      gr.Dropdown(["ukrainian", "english"], label="Мова")
     ],
-    outputs="text",
+    outputs=["text", "image"],
     title="Emotion Analyzer",
     description="Upload a text and model/tokenizer files (.h5 and .pickle) to predict the emotion.",
     allow_flagging="never"
