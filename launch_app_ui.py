@@ -76,7 +76,6 @@ def predict_text(text, model_file, tokenizer_file, mode, language, model=None, t
         plt.title('Аналіз Емоції Настрою', fontsize=18)
         plt.axhline(y=most_probable_idx, color='red', linestyle='--', label=f'Most Probable: {most_probable_emotion} ({most_probable_probability:.2f})')
         plt.legend()
-        plt.show()
         
         # Save the plot to a temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
@@ -111,7 +110,6 @@ def predict_text(text, model_file, tokenizer_file, mode, language, model=None, t
         plt.xlabel('Шанс', fontsize=15)
         plt.ylabel('Настрій', fontsize=15)
         plt.title('Аналіз Настрою', fontsize=18)
-        plt.show()
         
         # Save the plot to a temporary file
         temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
