@@ -20,6 +20,7 @@ Colab Version:
 DATASETS:
 For the English emotion analysis model, I had used the next dataset:
 https://www.kaggle.com/datasets/praveengovi/emotions-dataset-for-nlp
+
 For Ukrainian emotion analysis model, I had created by myself dataset, that consists of 200k+ marked words "negative"/"positive". You can use created dataset and mark me in your project.
 
 I'M OPEN FOR QUESTIONS, REQUESTS, PROPOSITIONS AND CONTRIBUTIONS.
