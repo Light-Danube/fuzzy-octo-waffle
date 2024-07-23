@@ -1,26 +1,49 @@
-# fuzzy-octo-waffle
-do you know what words of yours mean to anybody?
-Simple ML system - application, that uses pre-trained BiLSTM NN models, trained on English and self-created Ukrainian datasets.
+# Fuzzy Octo Waffle
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.7%2B-green.svg)
+![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
 
-Built for bachelor diploma work, this repository offers potential users a simple ML application, using both common approaches of its realization:
-- Using Google Colaboratory as the main application version, offering the potential user to use their Google account and resources of Google to train, validate, and use their emotion analysis models in this system.
-- Using the local version, with interface implementation by Gradio. Unlike Google Colaboratory, you cannot train your models, only use pre-trained or trained by colab notebooks from the main version.
+**Do you know what your words mean to anybody?**
 
-INSTALLATION:
-Local Version:
-- Download this repo as an archive and extract it to the desired spot on your PC;
-- Open the folder and run the "Install.bat" file to execute the installation of all required libs;
-- After successful installation - run "launch_main.bat" and then wait until it launches port for Gradio: http://127.0.0.1:7860/
-Colab Version:
-- Download this repo as an archive and extract it to the desired spot on PC;
-- Download to your Google Drive 3 files from folder "colab";
-- Open them and follow the instructions for usage.
+Fuzzy Octo Waffle is a simple machine learning system that utilizes pre-trained BiLSTM neural network models, trained on both English and self-created Ukrainian datasets, to perform emotion analysis.
 
-DATASETS:
-For the English emotion analysis model, I had used the next dataset:
-https://www.kaggle.com/datasets/praveengovi/emotions-dataset-for-nlp
+## Overview
 
-For Ukrainian emotion analysis model, I had created by myself dataset, that consists of 200k+ marked words "negative"/"positive". You can use created dataset and mark me in your project.
+This repository, created for a bachelor's diploma project, provides a straightforward ML application in two main versions:
 
-I'M OPEN FOR QUESTIONS, REQUESTS, PROPOSITIONS AND CONTRIBUTIONS.
+- **Google Colaboratory Version**: Leverages Google Colab for training, validating, and using emotion analysis models, utilizing Google’s resources.
+- **Local Version**: Utilizes Gradio for the interface. This version allows the usage of pre-trained models but does not support training new models.
+
+## Features
+
+- **Pre-trained BiLSTM Models**: Access pre-trained models for emotion analysis in both English and Ukrainian.
+- **Dual Deployment**: Choose between Google Colab for full model training and local deployment for quick model inference.
+- **User-friendly Interface**: Easy-to-use interface with Gradio for local deployment.
+
+## Installation
+
+### Local Version
+
+1. **Download and Extract**: Download this repository as an archive and extract it to your desired location on your PC.
+2. **Install Dependencies**: Navigate to the extracted folder and run the `Install.bat` file to install all required libraries.
+3. **Launch Application**: After successful installation, run `launch_main.bat` and wait for the Gradio interface to launch at `http://127.0.0.1:7860/`.
+
+### Google Colab Version
+
+1. **Download Repository**: Download this repository as an archive and extract it to your desired location on your PC.
+2. **Upload Files to Google Drive**: Upload the three files from the `colab` folder to your Google Drive.
+3. **Follow Instructions**: Open the uploaded files and follow the instructions provided for usage.
+
+## Datasets
+
+- **English Model**: Trained on the [Emotions Dataset for NLP](https://www.kaggle.com/datasets/praveengovi/emotions-dataset-for-nlp) from Kaggle.
+- **Ukrainian Model**: Self-created dataset consisting of 200k+ labeled words categorized as "negative" or "positive". Feel free to use this dataset and credit me in your project.
+
+## Contributing
+
+I'm open to questions, requests, propositions, and contributions. If you have any suggestions or improvements, feel free to create a pull request or open an issue.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
