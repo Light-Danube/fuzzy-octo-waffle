@@ -1,7 +1,7 @@
 tensorflow==2.15.0
 matplotlib==3.7.1
 torch==2.8.0
-keras==2.15.0
+keras>=3.11.0
 tf_keras==2.15.1
 numpy==1.25.2
 pandas==2.0.3
